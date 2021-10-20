@@ -83,7 +83,29 @@ DATABASES = {
         'NAME': 'wallet',
         'USER': 'root',
         'PASSWORD': '123456',
+        'OPTIONS': {'charset': 'utf8mb4'},
+    }
+}
 
+# redis配置 link.py用
+REDIS_HOST = '127.0.0.1'
+REDIS_PORT = 6379
+REDIS_DB = 11
+REDIS_PASSWORD = ''
+
+# redis配置 django_redis
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 1000,
+                "encoding": 'utf-8'
+            },
+            "PASSWORD": ""
+        }
     }
 }
 
