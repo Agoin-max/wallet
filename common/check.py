@@ -100,7 +100,7 @@ class CheckInfo:
 
 
 class CheckAES:
-    iv = b"develop-zhenjing"
+    iv = b"develop-zhenjing"  # 16位字节串
 
     def encrypt(self, key, encrypt_data):
         # 加密
