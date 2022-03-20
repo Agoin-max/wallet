@@ -1,12 +1,13 @@
-import base64, json
+import base64
+import json
 from Crypto.Cipher import AES
-from django.http import Http404
 from django_redis import get_redis_connection
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
-from common.custom import IllegalException, TokenExpireException
+from common.custom import IllegalException, TokenExpireException, CustomException
 
 
 class CheckView(APIView):
@@ -20,6 +21,7 @@ class CheckView(APIView):
         if api_path.startswith("/api"):
             # 数据效验与合法性检验
             res = CheckInfo().efficacy(request)
+            res = 1
             if res == 2:
                 raise IllegalException()
             elif res == 3:
@@ -34,12 +36,23 @@ class CheckView(APIView):
         return super(CheckView, self).finalize_response(request, response, *args, **kwargs)
 
     def handle_exception(self, exc):
-        response = None
-        if isinstance(exc, IllegalException):
-            response = Response({'code': exc.error_code, 'message': exc.error_message})
-        elif isinstance(exc, TokenExpireException):
-            response = Response({'code': exc.error_code, 'message': exc.error_message})
+        if isinstance(exc, CustomException):
+            response = Response({'code': exc.error_code, 'message': exc.error_message, 'data': exc.data},
+                                exception=True)
+        elif isinstance(exc, APIException):
+            response = Response({'code': str(exc.default_code), 'message': exc.detail}, exception=True)
+        else:
+            response = Response({"code": 888, "message": "未知"}, exception=True)
         return response
+
+
+class AllowAnyView(CheckView):
+    permission_classes = [AllowAny, ]
+
+    def initial(self, request, *args, **kwargs):
+        api_path = request.path
+        if api_path.startswith("/api"):
+            return super(CheckView, self).initial(request, *args, **kwargs)
 
 
 class CheckInfo:
@@ -80,9 +93,9 @@ class CheckInfo:
         # data  待解密的数据
         try:
             res = CheckAES().decrypt(key, data)
-        except:
+        except (Exception,):
             res = {}
-        if not res or res.get("validate") != validate:
+        if not res or res.get("validate", 0) != validate:
             # 非法请求
             return 2
         res["ip"] = ip
@@ -100,7 +113,7 @@ class CheckInfo:
 
 
 class CheckAES:
-    iv = b"develop-zhenjing"  # 16位字节串
+    iv = b"develop-agoining"  # 16位字节串
 
     def encrypt(self, key, encrypt_data):
         # 加密

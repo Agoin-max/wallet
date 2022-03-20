@@ -67,6 +67,12 @@ class SingleLinkList:
             cur = cur.next
         return False
 
+    # 7.在指定的索引位置添加一个节点
+    def insert(self, index, data):
+        """index:索引下标  data:数据区"""
+
+        pass
+
 
 if __name__ == '__main__':
     obj = SingleLinkList()
@@ -81,3 +87,4 @@ if __name__ == '__main__':
     print(obj.is_empty())
     obj.travel()
     print(obj.search(400))
+    print(obj.search(25))

@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import requests
+from common.utils import Tools
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,7 +27,7 @@ SECRET_KEY = '@-jfu#h%_c@b@&@#257fa#lc(vww#xh7i!zeo+-2$1hqq2vvlz'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -147,3 +149,54 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# TCP长连接,保持TCP连接
+HTTP = requests.Session()
+
+# 工具箱
+tools = Tools()
+
+# 日志
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    #  日志格式
+    'formatters': {
+        # 标准
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s "
+            "%(process)d %(thread)d %(message)s"
+        },
+        # 简单
+        'simple': {
+            'format': '[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d]%(message)s'
+        },
+    },
+    'handlers': {
+        # 打印到终端console
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        },
+        # INFO级别以上保存到日志文件
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件,根据文件大小自动切
+            'filename': '/tmp/wallet_requests_err.log',  # 日志文件
+            'maxBytes': 1024 * 1024 * 10,  # 日志大小 10M
+            'backupCount': 2,  # 备份数为2
+            'formatter': 'verbose',
+            'encoding': 'utf-8'
+        },
+    },
+    'root': {"level": "INFO", "handlers": ["console"]},
+    'loggers': {
+        'django.request': {
+            'handlers': ['file'],
+            'propagate': True,  # 向不向更好级别的logger传递
+            'level': 'INFO',
+        },
+    }
+}
