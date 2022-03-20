@@ -1,5 +1,7 @@
 import base64
 import json
+
+import sentry_sdk
 from Crypto.Cipher import AES
 from django_redis import get_redis_connection
 from rest_framework.exceptions import APIException
@@ -21,7 +23,6 @@ class CheckView(APIView):
         if api_path.startswith("/api"):
             # 数据效验与合法性检验
             res = CheckInfo().efficacy(request)
-            res = 1
             if res == 2:
                 raise IllegalException()
             elif res == 3:
@@ -36,14 +37,21 @@ class CheckView(APIView):
         return super(CheckView, self).finalize_response(request, response, *args, **kwargs)
 
     def handle_exception(self, exc):
+        response = None
         if isinstance(exc, CustomException):
             response = Response({'code': exc.error_code, 'message': exc.error_message, 'data': exc.data},
                                 exception=True)
         elif isinstance(exc, APIException):
             response = Response({'code': str(exc.default_code), 'message': exc.detail}, exception=True)
-        else:
-            response = Response({"code": 888, "message": "未知"}, exception=True)
-        return response
+
+        if response:
+            exc.__traceback__ = None
+            return response
+
+        # sentry
+        sentry_sdk.capture_exception()
+        # 未知异常
+        self.raise_uncaught_exception(exc)
 
 
 class AllowAnyView(CheckView):
