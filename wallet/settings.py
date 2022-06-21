@@ -216,6 +216,6 @@ sentry_sdk.init(
 
 # celery 异步任务配置
 BROKER_URL = "redis://127.0.0.1:6379/1"  # Broker -> MQ队列服务,可以使用Redis、RabbitMQ作为broker
-CELERY_RESULT_BACKEND = 'django-db'  # 存储结果后端
+CELERY_RESULT_BACKEND = "django-db"  # 存储结果后端数据表,也可以将任务结果存在Redis
 CELERY_TIMEZONE = TIME_ZONE
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = "json"

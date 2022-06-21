@@ -25,7 +25,7 @@ app.conf.beat_schedule = {
         "args": ()
     },
     "print_test": {
-        "task": "print_test",
+        "task": "CeleryTask.tasks.print_test",
         "schedule": crontab(minute=0, hour=8),
         "args": ()
     },
