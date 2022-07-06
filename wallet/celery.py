@@ -29,6 +29,16 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=0, hour=8),
         "args": ()
     },
+    "test": {
+        "task": "user.tasks.test",
+        "schedule": timedelta(seconds=5),
+        "args": ()
+    },
+    "test_one": {
+        "task": "external_services.tasks.test",
+        "schedule": timedelta(seconds=5),
+        "args": ()
+    },
 }
 
 

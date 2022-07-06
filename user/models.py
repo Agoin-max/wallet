@@ -6,7 +6,7 @@ from django.db import models
 from rest_framework.serializers import ModelSerializer
 
 
-class User(models.Model):
+class User(AbstractUser):
     """用户"""
     username = models.CharField('用户名', max_length=50, default="")
     password = models.CharField('密码', max_length=50, default="")
@@ -17,6 +17,8 @@ class User(models.Model):
     create_time = models.IntegerField('创建时间', default=0)
     update_time = models.IntegerField('更新时间', default=0)
     is_active = models.BooleanField("是否活跃", default=True)
+    REQUIRED_FIELDS = []
+    USERNAME_FIELD = 'phone'
 
     class Meta:
         db_table = 'user'

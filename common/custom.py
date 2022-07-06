@@ -19,3 +19,8 @@ class IllegalException(CustomException):
         self.data = data
 
 
+class FrequentException(CustomException):
+    def __init__(self, data=""):
+        self.error_message = "请求过于频繁"
+        self.error_code = '10003'
+        self.data = data

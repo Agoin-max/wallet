@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'user',
     'django_celery_results',
+    'external_services',
 ]
 
 MIDDLEWARE = [
@@ -51,8 +52,8 @@ MIDDLEWARE = [
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'common.wallet-middleware.WalletMiddleware'
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'common.wallet_middleware.WalletMiddleware'
 ]
 
 ROOT_URLCONF = 'wallet.urls'
@@ -85,7 +86,7 @@ DATABASES = {
         'PORT': 3306,
         'NAME': 'wallet',
         'USER': 'root',
-        'PASSWORD': '123456',
+        'PASSWORD': '12345678',
         'OPTIONS': {'charset': 'utf8mb4'},
     }
 }
@@ -130,6 +131,25 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Auth
+AUTH_USER_MODEL = 'user.User'
+AUTHENTICATION_BACKENDS = (
+    # default
+    'django.contrib.auth.backends.ModelBackend',
+    # 'guardian.backends.ObjectPermissionBackend',
+)
+
+# Rest_Framework
+REST_FRAMEWORK = {
+    # Handling Exception
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'common.authentication.RedisTokenAuth',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
@@ -142,6 +162,17 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+# 国际化语言支持
+LANGUAGES = (
+    ('zh-hans', '简体中文'),
+    ('en', 'English')
+)
+LOCALE_PATHS = (os.path.join(BASE_DIR, 'locale/'),)
+LANGUAGE_COOKIE_NAME = 'django_language'
+LANGUAGE_SESSION_KEY = '_language'
+# 国际化语言加载
+# from django.utils.translation import gettext_lazy as _
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
@@ -220,3 +251,25 @@ BROKER_URL = "redis://127.0.0.1:6379/1"  # Broker -> MQ队列服务,可以使用
 CELERY_RESULT_BACKEND = "django-db"  # 存储结果后端数据表,也可以将任务结果存在Redis
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_SERIALIZER = "json"
+
+# s3配置
+S3_KEY = {
+    "AWS_ACCESS_AK": 'xxx',
+    "AWS_SECRET_SK": 'xxx',
+    "AWS_STORAGE_BUCKET": 'xxx',
+    'REGION': 'xxx',
+}
+
+# 运行环境设置
+WALLET_ENV_DEV = 'dev'
+WALLET_ENV_STAGE = 'pre'
+WALLET_ENV_PRODUCTION = 'prod'
+
+WALLET_ENV = os.environ.get("WALLET_ENV_DEV")
+
+if WALLET_ENV == WALLET_ENV_DEV:
+    from wallet.settings_dev import *
+elif WALLET_ENV == WALLET_ENV_STAGE:
+    from wallet.settings_pre import *
+elif WALLET_ENV == WALLET_ENV_PRODUCTION:
+    from wallet.settings_prod import *

@@ -1,6 +1,8 @@
 from django.utils.deprecation import MiddlewareMixin
 
 
+#  自定义中间件
+
 class WalletMiddleware(MiddlewareMixin):
 
     # 请求处理函数,必须接收request

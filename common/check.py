@@ -3,7 +3,7 @@ import json
 
 import sentry_sdk
 from Crypto.Cipher import AES
-from django_redis import get_redis_connection
+from common.redis_link import conn
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -15,6 +15,10 @@ from common.custom import IllegalException, TokenExpireException, CustomExceptio
 class CheckView(APIView):
     permission_classes = [IsAuthenticated, ]
 
+    @property
+    def allowed_methods(self):
+        return ['GET', 'POST', 'PUT', 'DELETE']
+
     def initial(self, request, *args, **kwargs):
         # 获取ip
         # CheckInfo().get_ip(request)
@@ -22,7 +26,7 @@ class CheckView(APIView):
         api_path = request.path
         if api_path.startswith("/api"):
             # 数据效验与合法性检验
-            res = CheckInfo().efficacy(request)
+            res, user_id = CheckInfo().efficacy(request)
             if res == 2:
                 raise IllegalException()
             elif res == 3:
@@ -81,37 +85,46 @@ class CheckInfo:
 
     def efficacy(self, request):
         data = request.query_params.get("data", "")
-        validate = request.query_params.get("validate", "")  # 已登录13位随机字符串 未登录AES加密的Key
+        validate = request.query_params.get("validate", "")
         if request.method != "GET":
             data = request.data.get("data", "")
             validate = request.data.get("validate", "")
         ip = self.get_ip(request)
         if not self.check_validate(ip, validate):
             # 非法请求
-            return 2
+            return 2, None
         token = request.META.get('HTTP_AUTHORIZATION', '')[6:]
-        value = get_redis_connection("default").get(token)
+        value = conn.get(token)
         if token and not value:
             # 注册时,已存token到redis 7天
             # token过期
-            return 3
+            return 3, None
         key = "ago%s" % validate
+        arr = []
         if value:
-            key = token[value.split("-")[1]:value.split("-")[2]]
+            arr = value.split("-")
+            key = token[int(arr[1]):int(arr[2])]
         # data  待解密的数据
         try:
             res = CheckAES().decrypt(key, data)
         except (Exception,):
             res = {}
-        if not res or res.get("validate", 0) != validate:
+        if not res or res.get("validate") != validate:
             # 非法请求
-            return 2
+            return 2, None
         res["ip"] = ip
-        return 1
+        if request.method != "GET":
+            if hasattr(request.data, "_mutable"):
+                request.data._mutable = True
+            request.data.update(res)
+        else:
+            request.query_params._mutable = True
+            request.query_params.update(res)
+        if arr:
+            return 1, arr[0]
 
     def check_validate(self, ip, validate):
         key = "n-%s-%s" % (validate, ip)
-        conn = get_redis_connection("default")
         redis_value = conn.get(key)
         if redis_value:
             return False
